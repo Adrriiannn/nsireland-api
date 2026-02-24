@@ -21,11 +21,19 @@ internal sealed class BlobStorageService : IBlobStorageService
 
     public BlobStorageService(IOptions<BlobStorageOptions> options)
     {
+        var cs = options.Value.ConnectionString;
+
+        if (!string.IsNullOrWhiteSpace(cs))
+        {
+            _blobService = new BlobServiceClient(cs);
+            return;
+        }
+
         var accountName = options.Value.AccountName;
 
         if (string.IsNullOrWhiteSpace(accountName))
             throw new InvalidOperationException(
-                "Storage:AccountName is missing. Set App Service env var Storage__AccountName.");
+                "Storage settings missing. Set Storage:AccountName (Azure) or Storage:ConnectionString (local).");
 
         var serviceUri = new Uri($"https://{accountName}.blob.core.windows.net");
         _blobService = new BlobServiceClient(serviceUri, new DefaultAzureCredential());

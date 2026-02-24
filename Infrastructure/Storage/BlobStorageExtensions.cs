@@ -10,6 +10,7 @@ public static class BlobStorageExtensions
             .Configure(options =>
             {
                 options.AccountName = config["Storage:AccountName"] ?? "";
+                options.ConnectionString = config["Storage:ConnectionString"];
 
                 options.Containers = new BlobStorageOptions.ContainerOptions
                 {

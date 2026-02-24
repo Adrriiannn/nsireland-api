@@ -3,6 +3,7 @@ namespace NSI.Api.Infrastructure.Storage;
 public sealed class BlobStorageOptions
 {
     public string AccountName { get; set; } = "";
+    public string? ConnectionString { get; set; }
     public ContainerOptions Containers { get; set; } = new();
 
     public sealed class ContainerOptions

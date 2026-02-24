@@ -1,3 +1,5 @@
+using NSI.Api.Features.Assets;
+
 namespace NSI.Api.App;
 
 public static class WebApplicationExtensions
@@ -15,9 +17,7 @@ public static class WebApplicationExtensions
 
     private static WebApplication MapModules(this WebApplication app)
     {
-        // We’ll add modules here in the next commits, e.g.:
-        // app.MapAssetsModule();
-
+        app.MapAssetsModule();
         return app;
     }
 }
