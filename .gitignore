@@ -231,6 +231,9 @@ _pkginfo.txt
 *.appxbundle
 *.appxupload
 
+# Local config files
+appsettings.Development.json
+
 # Visual Studio cache files
 # files ending in .cache can be ignored
 *.[Cc]ache
