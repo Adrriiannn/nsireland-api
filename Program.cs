@@ -118,6 +118,8 @@ if (seedIdentity)
     await IdentitySeed.SeedAsync(db);
 }
 
+app.MapGet("/build", () => Results.Ok(new { build = "seed-toggle-v1" }));
+
 app.MapControllers();
 app.MapApp();
 
