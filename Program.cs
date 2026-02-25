@@ -12,25 +12,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
-    .Get<string[]>() 
-    ?? Array.Empty<string>();
+    .Get<string[]>() ?? Array.Empty<string>();
 
 builder.Services.AddBlobStorage(builder.Configuration);
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("WebApp", policy =>
-    {
-        var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
-        policy.WithOrigins(origins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
-});
 builder.Services.AddScoped<UserProvisioningService>();
 builder.Services.AddScoped<PasswordHasher>();
 builder.Services.AddScoped<TokenService>();
@@ -97,17 +85,16 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("WebCors", policy =>
     {
-        policy
-            .WithOrigins(allowedOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
 var app = builder.Build();
 
-app.UseCors("WebApp");
+app.UseRouting();
 app.UseCors("WebCors");
 app.UseAuthentication();
 app.UseAuthorization();
