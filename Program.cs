@@ -10,6 +10,11 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() 
+    ?? Array.Empty<string>();
+
 builder.Services.AddBlobStorage(builder.Configuration);
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -88,12 +93,22 @@ builder.Services.AddAuthorization(options =>
         policy => policy.RequireClaim("perm", "users.write"));
 });
 builder.Services.AddHttpClient();
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("WebCors", policy =>
+    {
+        policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 
 var app = builder.Build();
 
 app.UseCors("WebApp");
-
+app.UseCors("WebCors");
 app.UseAuthentication();
 app.UseAuthorization();
 
