@@ -15,6 +15,17 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("WebApp", policy =>
+    {
+        var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+        policy.WithOrigins(origins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 builder.Services.AddScoped<UserProvisioningService>();
 builder.Services.AddScoped<PasswordHasher>();
 builder.Services.AddScoped<TokenService>();
@@ -37,6 +48,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
             ClockSkew = TimeSpan.FromSeconds(30)
         };
+
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // Prefer Authorization header, but fall back to HttpOnly cookie.
+                if (!string.IsNullOrWhiteSpace(context.Token))
+                    return Task.CompletedTask;
+
+                if (context.Request.Cookies.TryGetValue("nsi_access", out var cookieToken) &&
+                    !string.IsNullOrWhiteSpace(cookieToken))
+                {
+                    context.Token = cookieToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
@@ -57,8 +87,12 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireUsersWrite",
         policy => policy.RequireClaim("perm", "users.write"));
 });
+builder.Services.AddHttpClient();
+
 
 var app = builder.Build();
+
+app.UseCors("WebApp");
 
 app.UseAuthentication();
 app.UseAuthorization();

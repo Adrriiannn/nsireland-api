@@ -88,14 +88,63 @@ public sealed class TokenService
         return (raw, rt);
     }
 
+    private string? GetCookieDomain()
+    {
+        var domain = _config["Cookies:Domain"];
+        return string.IsNullOrWhiteSpace(domain) ? null : domain;
+    }
+
     public void SetRefreshCookie(HttpResponse response, string rawRefreshToken, bool isDev)
     {
+        var domain = GetCookieDomain();
+
         response.Cookies.Append("nsi_refresh", rawRefreshToken, new CookieOptions
         {
             HttpOnly = true,
             Secure = !isDev,           // ✅ dev: false, prod: true
             SameSite = SameSiteMode.Lax,
-            Path = "/"
+            Path = "/",
+            Domain = domain
+        });
+    }
+
+
+    public void SetAccessCookie(HttpResponse response, string accessToken, bool isDev)
+    {
+        var domain = GetCookieDomain();
+
+        response.Cookies.Append("nsi_access", accessToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !isDev,
+            SameSite = SameSiteMode.Lax,
+            Path = "/",
+            Expires = DateTimeOffset.UtcNow.AddMinutes(15),
+            Domain = domain
+        });
+    }
+
+    public void ClearAccessCookie(HttpResponse response, bool isDev)
+    {
+        response.Cookies.Append("nsi_access", "", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !isDev,
+            SameSite = SameSiteMode.Lax,
+            Path = "/",
+            Expires = DateTimeOffset.UtcNow.AddDays(-1)
+        });
+    }
+
+    public void ClearRefreshCookie(HttpResponse response, bool isDev)
+    {
+        response.Cookies.Append("nsi_refresh", "", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !isDev,
+            SameSite = SameSiteMode.Lax,
+            Path = "/",
+            Expires = DateTimeOffset.UtcNow.AddDays(-1)
         });
     }
 
