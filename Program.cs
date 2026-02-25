@@ -62,7 +62,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RequireAcpAccess",
@@ -80,6 +79,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireUsersWrite",
         policy => policy.RequireClaim("perm", "users.write"));
 });
+
 builder.Services.AddHttpClient();
 builder.Services.AddCors(options =>
 {
@@ -104,10 +104,17 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-if (app.Environment.IsDevelopment())
+// Identity seeding (roles/permissions/system settings)
+// - In dev: enabled by default.
+// - In prod: enable temporarily via Azure App Setting: Identity__SeedOnStartup=true
+var seedIdentity = app.Environment.IsDevelopment() ||
+                   app.Configuration.GetValue<bool>("Identity:SeedOnStartup");
+
+if (seedIdentity)
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
     await IdentitySeed.SeedAsync(db);
 }
 
